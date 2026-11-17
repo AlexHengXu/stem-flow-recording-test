@@ -9,6 +9,8 @@ let screenStream,mediaRecorder,mediaChunks=[],recordingDestination,audioContext;
 const recordToggle=document.getElementById('recordToggle'),recordFormatHint=document.getElementById('recordFormatHint');
 const pauseOverlay=document.getElementById('pauseOverlay'),helpOverlay=document.getElementById('helpOverlay'),endingOverlay=document.getElementById('endingOverlay');
 const state={phase:'paused',recordPerformance:false},players={};let pausedFrom='mix',paintTimer,clockTimer,startedAt,frame=0,savedResolve;
+const screenCaptureTest=new URLSearchParams(location.search).get('capture')==='screen';
+if(screenCaptureTest)document.querySelector('#testPanel p').textContent='Share THIS test tab. Uses generated artwork and audio; no camera. Tests actual browser tab capture.';
 const supportedRecordingTypes=['video/mp4;codecs="avc1.424028,mp4a.40.2"','video/mp4'].filter(t=>MediaRecorder.isTypeSupported(t));
 recordToggle.disabled=!supportedRecordingTypes.length;
 function player(){let time=37;const e=new EventTarget();Object.defineProperty(e,'currentTime',{get:()=>time,set:t=>{time=t;queueMicrotask(()=>e.dispatchEvent(new Event('seeked')))}});e.seeking=false;return e;}
@@ -26,7 +28,7 @@ const loading=(async()=>{
  let fixtureHandle=null;
  const originalConfig=navigator.mediaDevices.setCaptureHandleConfig?.bind(navigator.mediaDevices);
  if(originalConfig)navigator.mediaDevices.setCaptureHandleConfig=config=>{fixtureHandle=config.handle;originalConfig(config)};
- prepareScreenRecording=async()=>{screenStream=document.getElementById('fixture').captureStream(24);for(const track of screenStream.getVideoTracks())Object.defineProperty(track,'getCaptureHandle',{value:()=>({handle:fixtureHandle})});};
+ if(!screenCaptureTest)prepareScreenRecording=async()=>{screenStream=document.getElementById('fixture').captureStream(24);for(const track of screenStream.getVideoTracks())Object.defineProperty(track,'getCaptureHandle',{value:()=>({handle:fixtureHandle})});};
  const script=document.createElement('script');script.src='../js/record-menu.js';await new Promise((ok,bad)=>{script.onload=ok;script.onerror=bad;document.body.append(script)});
  result.textContent='Ready';
 })();
@@ -39,20 +41,26 @@ async function test(mode){
  audioContext=new AudioContext();await audioContext.resume();recordingDestination=audioContext.createMediaStreamDestination();osc=audioContext.createOscillator();const gain=audioContext.createGain();gain.gain.value=.08;osc.connect(gain).connect(recordingDestination);osc.start();
  const ctx=fixture.getContext('2d');paintTimer=setInterval(()=>{
  const help=helpOverlay.classList.contains('visible'),game=state.phase==='mix';
- ctx.fillStyle=help?'#b71925':game?'#18a34a':'#eab308';ctx.fillRect(0,0,640,360);ctx.fillStyle='white';ctx.font='26px sans-serif';ctx.fillText(help?'How to Play':game?'GAME + CAMERA TEST PATTERN':'Paused',30,100);ctx.fillText('Frame '+(++frame),30,160);ctx.beginPath();ctx.arc(520,230,55,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=help?'#b71925':game?'#18a34a':'#eab308';ctx.fillRect(0,0,640,360);ctx.fillStyle='white';ctx.font='26px sans-serif';ctx.fillText(help?'How to Play':game?'GAME + CAMERA TEST PATTERN':'Paused',30,100);ctx.fillText('Frame '+(++frame),30,160);ctx.beginPath();ctx.arc(520,230,55,0,Math.PI*2);ctx.fill();ctx.fillStyle=`rgb(${(frame*3)%240},40,180)`;ctx.fillRect(0,300,640,60);
  },40);
  result.textContent='Recording '+mode+' with native MP4…';const done=new Promise(r=>savedResolve=r);
  await window.StemRecordMenu.begin(mode);
  if(mediaRecorder?.state!=='recording')throw Error(recordMenuStatus.textContent);
  await sleep(3500);pausePerformanceRecording();state.phase='paused';pauseAll();showOverlay(pauseOverlay);updateUI();
  await sleep(800);state.phase='mix';hideOverlay(pauseOverlay);resumePerformanceRecording();await sleep(1200);
+ pausePerformanceRecording();state.phase='paused';pauseAll();showOverlay(pauseOverlay);updateUI();
  stopPerformanceRecording(true);const blob=await done;blobURL=URL.createObjectURL(blob);
  const metadata=new Promise((ok,bad)=>{playback.onloadedmetadata=ok;playback.onerror=bad});playback.src=blobURL;await metadata;
- const duration=playback.duration,pixels=[];const sample=document.createElement('canvas');sample.width=640;sample.height=360;const s=sample.getContext('2d',{willReadFrequently:true});
- for(const t of [.3,duration-.3]){await new Promise((ok,bad)=>{playback.onseeked=ok;playback.onerror=bad;playback.currentTime=t});s.drawImage(playback,0,0,640,360);pixels.push(Array.from(s.getImageData(5,5,1,1).data).slice(0,3));}
- const correctPixels=pixels.every(([r,g,b])=>g>r*2&&g>b*1.5);
+ const duration=playback.duration,pixels=[],motion=[],signatures=[];const sample=document.createElement('canvas');sample.width=640;sample.height=360;const s=sample.getContext('2d',{willReadFrequently:true});
+ for(const t of [.3,1.3,2.3,duration-.3]){await new Promise((ok,bad)=>{playback.onseeked=ok;playback.onerror=bad;playback.currentTime=t});s.drawImage(playback,0,0,640,360);pixels.push(Array.from(s.getImageData(5,5,1,1).data).slice(0,3));motion.push(s.getImageData(5,330,1,1).data[0]);const rgba=s.getImageData(0,0,640,360).data;let hash=0;for(let i=0;i<rgba.length;i+=64)hash=(hash*31+rgba[i])>>>0;signatures.push(hash);}
+ const correctPixels=screenCaptureTest||pixels.every(([r,g,b])=>g>r*2&&g>b*1.5);
+ const moving=screenCaptureTest?new Set(signatures).size>=3:Math.max(...motion)-Math.min(...motion)>30;
+ const decoded=await new OfflineAudioContext(1,1,48000).decodeAudioData(await blob.arrayBuffer());
+ const pcm=decoded.getChannelData(0);const rms=(a,b)=>{let sum=0;for(let i=a;i<b;i++)sum+=pcm[i]*pcm[i];return Math.sqrt(sum/(b-a));};
+ const sound=[rms(0,Math.min(pcm.length,decoded.sampleRate)),rms(Math.max(0,pcm.length-decoded.sampleRate),pcm.length)];
+ const audible=sound.every(x=>x>.01);
  const expected=mode==='now'?37:0;const position=Object.values(startedAt).every(t=>Math.abs(t-expected)<.1);
- result.textContent=JSON.stringify({result:correctPixels&&position&&duration>4&&duration<6?'PASS':'FAIL',mode,startedAt,duration,bytes:blob.size,mime:blob.type,pixels,gameFramesAtStartAndEnd:correctPixels,audioTracks:recordingDestination.stream.getAudioTracks().length},null,2);
+ result.textContent=JSON.stringify({result:correctPixels&&moving&&audible&&position&&duration>4&&duration<6?'PASS':'FAIL',source:screenCaptureTest?'real-tab-capture':'generated-stream',mode,startedAt,duration,bytes:blob.size,mime:blob.type,pixels,gameFramesAtStartAndEnd:correctPixels,motionSamples:motion,frameSignatures:signatures,movingFrames:moving,decodedAudioRms:sound,audibleAudio:audible,audioTracks:recordingDestination.stream.getAudioTracks().length},null,2);
  }catch(e){result.textContent='FAIL: '+e.message}finally{clearInterval(paintTimer);clearInterval(clockTimer);osc?.stop();await audioContext?.close();testNow.disabled=testRestart.disabled=false;state.phase='paused';updateUI();}
 }
 testNow.onclick=()=>test('now');testRestart.onclick=()=>test('restart');
