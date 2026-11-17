@@ -77,7 +77,8 @@
     const poseStatus = document.getElementById("poseStatus");
     const enableButton = document.getElementById("enableButton");
     const startButton = document.getElementById("startButton");
-    const recordToggle = document.getElementById("recordToggle");
+    // Recording is enabled only by the pause-menu Record actions.
+    const recordToggle = { checked: false, disabled: false };
     const recordingTypes = [
       'video/mp4;codecs="avc1.424028,mp4a.40.2"',
       'video/mp4'
@@ -266,7 +267,7 @@
     async function prepareScreenRecording() {
       if (!recordToggle.checked) { releaseScreenCapture(); return; }
       if (screenStream?.getVideoTracks().some(track => track.readyState === 'live')) return;
-      // Called directly from Start: display capture requires a user gesture.
+      // Called from the pause-menu recording action: display capture requires a user gesture.
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: { ideal: 24, max: 30 }, width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 } },
         audio: false, preferCurrentTab: true, selfBrowserSurface: "include", surfaceSwitching: "exclude"
@@ -3810,14 +3811,11 @@ function processStableResults(gestures,now) {
       startPending = true;
       startButton.disabled = true;
       try {
-        await prepareScreenRecording();
         await audioContext.resume();
         armSelectedSession();
       } catch (error) {
         releaseScreenCapture();
-        menuHint.textContent = error.name === 'NotAllowedError'
-          ? 'Screen sharing was cancelled. Press Start to choose the game tab, or uncheck recording to play without it.'
-          : 'Session could not start. Check screen sharing and audio, then press Start to retry.';
+        menuHint.textContent = 'Session could not start. Check audio, then press Start to retry.';
       } finally {
         startPending = false;
         startButton.disabled = startPending || !(state.cameraReady && state.modelReady && songReady);
@@ -3828,11 +3826,6 @@ function processStableResults(gestures,now) {
     document.getElementById('skipStepButton').onclick = skipIntroStep;
     document.getElementById('skipIntroButton').onclick = skipIntroAll;
     document.getElementById('introNext').onclick = advanceIntro;
-    recordToggle.onchange = () => {
-      state.recordPerformance = recordToggle.checked;
-      if (!recordToggle.checked) stopPerformanceRecording(true);
-      updateUI();
-    };
     continueButton.onclick = resumeGame;
     helpButton.onclick = openHelp;
     helpQuitButton.onclick = closeHelp;
