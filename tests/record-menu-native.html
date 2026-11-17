@@ -2,7 +2,7 @@
 <link rel="stylesheet" href="../css/style.css">
 <style>body{overflow:auto;padding:24px}#testPanel{position:relative;z-index:999;background:#182630;padding:20px}#testPanel button{margin:5px}#fixture{width:640px;height:360px}#pauseOverlay{position:relative;padding:10px;display:block}#pauseOverlay:not(.visible){display:none}#helpOverlay,#endingOverlay{display:none}video{width:480px}pre{white-space:pre-wrap}</style>
 <div id="testPanel"><h1>Native MP4 recording test</h1><p>Generated game/camera test pattern + generated audio. No real camera or screen capture.</p><button id="testNow">Test Continue from now</button><button id="testRestart">Test Restart song</button><pre id="result">Loading…</pre><canvas id="fixture" width="640" height="360"></canvas><video id="playback" controls muted></video></div>
-<div id="pauseOverlay" class="visible"><h2>Paused</h2><button id="continueButton">Continue</button><button id="restartButton">Restart</button><button id="endButton">End</button><button id="recordMenuButton">Record</button><button id="recordSave" hidden>Stop &amp; save</button><div id="recordChoices" hidden><p>Record your remix</p><button id="recordFromNow">Continue from now</button><button id="recordFromStart">Restart song</button><button id="recordBack">Back</button></div><p id="recordMenuStatus"></p></div>
+<div id="pauseOverlay" class="visible"><h2>Paused</h2><button id="continueButton">Continue</button><button id="restartButton">Restart</button><button id="recordMenuButton">Record</button><button id="recordSave" hidden>Stop &amp; save</button><div id="recordChoices" hidden><p>Record your remix</p><button id="recordFromNow">Continue from now</button><button id="recordFromStart">Restart song</button><button id="recordBack">Back</button></div><p id="recordMenuStatus"></p></div>
 <div id="helpOverlay" class="visible">How to Play</div><div id="endingOverlay"></div><p id="instruction"></p><input id="recordToggle" type="checkbox" hidden><p id="recordFormatHint"></p>
 <script>
 let screenStream,mediaRecorder,mediaChunks=[],recordingDestination,audioContext;
@@ -19,17 +19,19 @@ function hideOverlay(el){el.classList.remove('visible')}function showOverlay(el)
 function resetGestureControls(){}function introRender(){}function updateUI(){window.StemRecordMenu?.refresh()}
 function playAll(){startedAt=Object.fromEntries(Object.entries(players).map(([k,p])=>[k,p.currentTime]));clockTimer=setInterval(()=>Object.values(players).forEach(p=>p.currentTime+=.05),50)}
 function pauseAll(){clearInterval(clockTimer)}
+function stopAll(){pauseAll()}
+const endingMessage=document.createElement("p");
 function recordingSaved(blob){savedResolve?.(blob)}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const loading=(async()=>{
- const source=await(await fetch('../js/app.js')).text();const code=source.slice(source.indexOf('    function releaseScreenCapture()'),source.indexOf('    function startMixer()')).replace('link.click();','recordingSaved(blob);');
+ const source=await(await fetch('../js/app.js',{cache:'no-store'})).text();const code=source.slice(source.indexOf('    function releaseScreenCapture()'),source.indexOf('    function startMixer()')).replace('link.click();','recordingSaved(blob);');
  (0,eval)(code);
  // Synthetic source only: use the real recorder and menu state machine below.
  let fixtureHandle=null;
  const originalConfig=navigator.mediaDevices.setCaptureHandleConfig?.bind(navigator.mediaDevices);
  if(originalConfig)navigator.mediaDevices.setCaptureHandleConfig=config=>{fixtureHandle=config.handle;originalConfig(config)};
  if(!screenCaptureTest)prepareScreenRecording=async()=>{screenStream=document.getElementById('fixture').captureStream(24);for(const track of screenStream.getVideoTracks())Object.defineProperty(track,'getCaptureHandle',{value:()=>({handle:fixtureHandle})});};
- const script=document.createElement('script');script.src='../js/record-menu.js';await new Promise((ok,bad)=>{script.onload=ok;script.onerror=bad;document.body.append(script)});
+ const script=document.createElement('script');script.src='../js/record-menu.js?v=20-record-menu';await new Promise((ok,bad)=>{script.onload=ok;script.onerror=bad;document.body.append(script)});
  result.textContent='Ready';
 })();
 async function test(mode){
@@ -49,7 +51,7 @@ async function test(mode){
  await sleep(3500);pausePerformanceRecording();state.phase='paused';pauseAll();showOverlay(pauseOverlay);updateUI();
  await sleep(800);state.phase='mix';hideOverlay(pauseOverlay);resumePerformanceRecording();await sleep(1200);
  pausePerformanceRecording();state.phase='paused';pauseAll();showOverlay(pauseOverlay);updateUI();
- stopPerformanceRecording(true);const blob=await done;blobURL=URL.createObjectURL(blob);
+ document.getElementById('recordSave').click();const blob=await done;blobURL=URL.createObjectURL(blob);
  const metadata=new Promise((ok,bad)=>{playback.onloadedmetadata=ok;playback.onerror=bad});playback.src=blobURL;await metadata;
  const duration=playback.duration,pixels=[],motion=[],signatures=[];const sample=document.createElement('canvas');sample.width=640;sample.height=360;const s=sample.getContext('2d',{willReadFrequently:true});
  for(const t of [.3,1.3,2.3,duration-.3]){await new Promise((ok,bad)=>{playback.onseeked=ok;playback.onerror=bad;playback.currentTime=t});s.drawImage(playback,0,0,640,360);pixels.push(Array.from(s.getImageData(5,5,1,1).data).slice(0,3));motion.push(s.getImageData(5,330,1,1).data[0]);const rgba=s.getImageData(0,0,640,360).data;let hash=0;for(let i=0;i<rgba.length;i+=64)hash=(hash*31+rgba[i])>>>0;signatures.push(hash);}
