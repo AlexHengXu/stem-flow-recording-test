@@ -23,3 +23,7 @@ The v14 setup recording checkbox also remains available: it asks for sharing per
 Run `npm run check` with Node.js. Native MP4 test: `tests/record-menu-native.html`.
 The browser regression uses generated video and audio, checks both song-start positions, pauses/resumes, seeks the MP4 to its beginning and end, and checks game-pattern pixels rather than the Help pattern.
 Real camera, OS sharing selection, and machine-specific performance still need a playtest. No captured camera footage is uploaded by this project.
+
+## MP4 finalization revision (November 17)
+
+The recorder now installs callbacks before starting, writes a complete MP4 without a one-second timeslice, and keeps capture tracks alive until the final data/stop event. Saving while paused resumes the encoder before stopping. `tests/record-menu-native.html?capture=screen` tests the actual selected browser tab; the default mode uses generated video. Both tests inspect changing decoded frames and non-silent decoded audio, and save directly from a paused state. Real-screen testing requires manually choosing the test tab.
