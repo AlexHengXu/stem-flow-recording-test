@@ -147,7 +147,7 @@
   <div id="pauseOverlay" class="modal-overlay" aria-hidden="true">
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
       <h2 id="pauseTitle">Paused</h2>
-      <p id="pauseDescription">The remix is paused. Continue, restart the song, or end this run.</p>
+      <p id="pauseDescription">The remix is paused. Continue, restart the song, or record.</p>
       <div class="modal-actions">
         <button id="continueButton" class="primary" type="button">Continue</button>
         <button id="skipStepButton" type="button" hidden>Skip this step</button>
@@ -155,7 +155,6 @@
         <button id="restartButton" type="button">Restart</button>
         <button id="recordMenuButton" type="button" hidden>Record</button>
         <button id="recordSave" type="button" hidden>Stop &amp; save</button>
-        <button id="endButton" class="danger" type="button">End</button>
       </div>
       <div id="recordChoices" hidden>
         <p>Record your remix</p>
@@ -182,7 +181,7 @@
   </div>
 
     <script src="js/team-visuals.js?v=10-folder"></script>
-    <script src="js/app.js?v=19-pause-record-only"></script>
+    <script src="js/app.js?v=20-record-menu"></script>
   <script src="js/stem-effects.js?v=10-folder"></script>
   <script src="js/song-library.js?v=10-folder"></script>
   <script src="js/fx-bank-switch.js?v=10-folder"></script>
@@ -192,6 +191,6 @@
   <script src="js/performance-panel.js?v=10-folder"></script>
 <script>if(new URLSearchParams(location.search).get('flowie')==='done')document.documentElement.classList.remove('booting');</script>
 <script src="js/ambient-music.js?v=14-silent-tutorial"></script>
-<script src="js/record-menu.js?v=18-mp4-finalize"></script>
+<script src="js/record-menu.js?v=20-record-menu"></script>
 </body>
 </html>

@@ -14,7 +14,7 @@ In Remix, press Space to pause, then select **Record**:
 - **Continue from now** records from the current song position.
 - **Restart song** seeks all stems to zero and records from the beginning, preserving volume and FX.
 
-Choose the current Stem Flow tab in the browser sharing dialog. Recording waits for live video frames before music starts. Pause suspends recording; Continue resumes the same file. **Stop & save** or End downloads an MP4. Save the current recording before starting another one.
+Choose the current Stem Flow tab in the browser sharing dialog. Recording waits for live video frames before music starts. Pause suspends recording; Continue resumes the same file. **Stop & save** downloads an MP4. There is no End button. Selecting Record replaces the ordinary pause actions with Continue from now, Restart song, and Back. Save the current recording before starting another one.
 
 Recording is available only from the Remix pause menu. Song selection and Start do not request screen sharing or start a recording. Piano background music is silent throughout tutorial and Remix.
 
