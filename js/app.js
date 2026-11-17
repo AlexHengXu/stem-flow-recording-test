@@ -97,7 +97,6 @@
     const endingMessage = document.getElementById("endingMessage");
     const continueButton = document.getElementById("continueButton");
     const restartButton = document.getElementById("restartButton");
-    const endingRestartButton = document.getElementById("endingRestartButton");
     const closeButton = document.getElementById("closeButton");
     const helpButton = document.getElementById("helpButton");
     const helpOverlay = document.getElementById("helpOverlay");
@@ -3816,7 +3815,6 @@ function processStableResults(gestures,now) {
     helpButton.onclick = openHelp;
     helpQuitButton.onclick = closeHelp;
     restartButton.onclick = restartGame;
-    endingRestartButton.onclick = restartGame;
     closeButton.onclick = () => {
       window.close();
       endingMessage.textContent = "If the browser does not close this tab automatically, you can close it manually.";
