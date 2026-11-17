@@ -1,0 +1,18 @@
+{
+  "chorus": {
+    "rms": 0.15243933515175082,
+    "difference": 0.22185573448108525
+  },
+  "tremolo": {
+    "rms": 0.1340348241541132,
+    "difference": 0.13988437293301167
+  },
+  "distortion": {
+    "rms": 0.16212782406927262,
+    "difference": 0.34694652827249356
+  },
+  "beat_repeat": {
+    "quantizedStart": 0.125,
+    "loopError": 0
+  }
+}

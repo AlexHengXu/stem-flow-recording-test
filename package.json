@@ -1,0 +1,13 @@
+{
+  "name": "stem-flow",
+  "private": true,
+  "scripts": {
+    "build": "node build.cjs",
+    "test": "node test-integration.cjs && node test-fx-bank.cjs && node test-pinch-regression.cjs && node test-performance.cjs && node test-effects.cjs && node test-performance-panel.cjs && node test-render-retention.cjs && node test-screen-recording.cjs && node test-team-visuals.cjs && node test-volume-landmarks.cjs && node test-flowie-tutorial.cjs && node test-camera-gate.cjs && node test-ambient-music.cjs && node test-record-menu.cjs",
+    "start": "python3 serve.py",
+    "check": "node build.cjs && node test-integration.cjs && node test-fx-bank.cjs && node test-pinch-regression.cjs && node test-performance.cjs && node test-performance-panel.cjs && node test-render-retention.cjs && node test-screen-recording.cjs && node test-team-visuals.cjs && node test-volume-landmarks.cjs && node test-flowie-tutorial.cjs && node test-camera-gate.cjs && node test-ambient-music.cjs && node test-record-menu.cjs"
+  },
+  "devDependencies": {
+    "node-web-audio-api": "2.2.0"
+  }
+}

@@ -1,0 +1,13 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+let handler,rafId=0,clock=0,draws=0;
+const scheduled=new Map(),panel={style:{},setAttribute(){}},inference=Promise.resolve('tracked');
+const ctx={document:{hidden:false,createElement:()=>panel,body:{append(){}}},window:{addEventListener:(name,fn)=>{handler=fn;}},Element:class{},performance:{now:()=>++clock},state:{phase:'mix',mode:'tracks'},hands:{send:()=>inference},renderMaterials(){draws++;return 12;},renderZone(){return 34;},Promise,requestAnimationFrame(fn){scheduled.set(++rafId,fn);return rafId;},cancelAnimationFrame(id){scheduled.delete(id);}};
+vm.createContext(ctx);vm.runInContext(fs.readFileSync(__dirname+'/js/performance-panel.js','utf8'),ctx);
+const key=code=>handler({code,target:null});
+assert(panel.hidden);key('KeyJ');assert.equal(scheduled.size,0);
+assert.equal(ctx.renderMaterials(),12);assert.equal(draws,1);
+key('KeyP');assert(!panel.hidden);assert.equal(scheduled.size,1);assert.equal(ctx.hands.send(),inference,'Diagnostic wrapper preserves the original inference promise');
+assert.equal(ctx.renderZone(),34);key('KeyP');assert(panel.hidden);assert.equal(scheduled.size,0);
+key('KeyP');assert.equal(scheduled.size,1,'Rapid off/on has only one sampling loop');key('KeyP');
+assert.equal(ctx.hands.send(),inference);
+console.log('PASS: diagnostics off by default, P toggle, single sampling loop and unchanged inference/render return values.');

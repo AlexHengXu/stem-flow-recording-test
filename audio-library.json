@@ -1,0 +1,22 @@
+{
+  "demo": {
+    "bass.mp3": "assets/audio/demo-bass.mp3",
+    "drums.mp3": "assets/audio/demo-drums.mp3",
+    "other.mp3": "assets/audio/demo-other.mp3",
+    "vocals.mp3": "assets/audio/demo-vocals.mp3"
+  },
+  "songs": {
+    "hot-mess": {
+      "vocals": "assets/audio/hot-mess-vocals.mp3",
+      "bass": "assets/audio/hot-mess-bass.mp3",
+      "drums": "assets/audio/hot-mess-drums.mp3",
+      "other": "assets/audio/hot-mess-other.mp3"
+    },
+    "red-light-green-light": {
+      "vocals": "assets/audio/red-light-green-light-vocals.mp3",
+      "bass": "assets/audio/red-light-green-light-bass.mp3",
+      "drums": "assets/audio/red-light-green-light-drums.mp3",
+      "other": "assets/audio/red-light-green-light-other.mp3"
+    }
+  }
+}

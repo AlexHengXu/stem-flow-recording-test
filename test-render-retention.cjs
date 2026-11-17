@@ -1,0 +1,12 @@
+const vm=require('node:vm'),assert=require('node:assert/strict'),html=require('./test-source.cjs')();
+const clears=[0,0,0,0],labels=[];let amount=.5;
+const views=clears.map((_,i)=>({orb:{dataset:{},getBoundingClientRect:()=>({width:200}),setAttribute:(name,value)=>{labels[i]=value;}},ctx:{setTransform(){},clearRect(){clears[i]++;}}}));
+const ctx={document:{body:{classList:{remove(){},contains(){return false}}}},core:{getBoundingClientRect:()=>({width:100})},materialViews:views,state:{mode:'effects',effectTrack:0,volumes:[.8,.8,.8,.8]},effectKeys:['reverb','delay','filter','quit'],tracks:['vocals','bass','drums','other'].map(key=>({key,label:key})),fxAmount:()=>amount,materialTime:0,innerWidth:1200,innerHeight:800,materialSurfaces:{},materialRenderCache:[],mainWork:[{},{},{},{}],drawMainOrb(){}};
+vm.createContext(ctx);const a=html.indexOf('    function renderMaterials('),b=html.indexOf('    let uiUpdatePending=',a);vm.runInContext(html.slice(a,b),ctx);
+vm.runInContext('renderMaterials()',ctx);assert.deepEqual(clears,[1,1,1,1]);
+amount=.6;vm.runInContext('renderMaterials()',ctx);assert.deepEqual(clears,[1,1,1,1],'New FX values keep their previous image until the next batch');assert(labels[0].includes('60 percent'));
+ctx.effectKeys[0]='chorus';vm.runInContext('renderMaterials()',ctx);assert.equal(clears[0],2,'Switching the FX kind clears the old image');
+ctx.state.mode='tracks';vm.runInContext('renderMaterials([0,2])',ctx);assert.deepEqual(clears,[3,1,2,1],'Main rendering touches only its scheduled pair');
+ctx.document.body.classList.contains=()=>true;
+vm.runInContext('renderMaterials([0,2])',ctx);assert.deepEqual(clears,[3,1,2,1],'Tutorial skips background game rendering');
+console.log('PASS: changing FX amounts retains the image; changing effect kind clears it; main draws only the scheduled pair.');
