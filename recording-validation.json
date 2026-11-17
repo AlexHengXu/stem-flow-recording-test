@@ -1,0 +1,122 @@
+{
+  "version": "v18-mp4-finalize",
+  "tested_on": "2026-11-17",
+  "browser": "Chrome on macOS",
+  "capture": "User-selected real browser tab via getDisplayMedia",
+  "fixture": "Generated animated artwork and generated audio; production recorder and recording-menu functions",
+  "limitations": [
+    "Not a full gameplay/camera recording",
+    "Audio is a generated test signal, not a game song",
+    "Short recording test, not a full-song duration test"
+  ],
+  "results": [
+    {
+      "result": "PASS",
+      "source": "real-tab-capture",
+      "mode": "now",
+      "startedAt": {
+        "vocals": 37,
+        "drums": 37
+      },
+      "duration": 4.989667,
+      "bytes": 309776,
+      "mime": "video/mp4;codecs=avc1.42001f,mp4a.40.2",
+      "pixels": [
+        [
+          3,
+          5,
+          11
+        ],
+        [
+          3,
+          5,
+          11
+        ],
+        [
+          3,
+          5,
+          11
+        ],
+        [
+          3,
+          5,
+          11
+        ]
+      ],
+      "gameFramesAtStartAndEnd": true,
+      "motionSamples": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "frameSignatures": [
+        2606764871,
+        1698998659,
+        1095132484,
+        881219702
+      ],
+      "movingFrames": true,
+      "decodedAudioRms": [
+        0.05533291744218815,
+        0.05659960378516728
+      ],
+      "audibleAudio": true,
+      "audioTracks": 1
+    },
+    {
+      "result": "PASS",
+      "source": "real-tab-capture",
+      "mode": "restart",
+      "startedAt": {
+        "vocals": 0,
+        "drums": 0
+      },
+      "duration": 4.686729,
+      "bytes": 213326,
+      "mime": "video/mp4;codecs=avc1.42001f,mp4a.40.2",
+      "pixels": [
+        [
+          3,
+          5,
+          11
+        ],
+        [
+          3,
+          5,
+          11
+        ],
+        [
+          3,
+          5,
+          11
+        ],
+        [
+          3,
+          5,
+          11
+        ]
+      ],
+      "gameFramesAtStartAndEnd": true,
+      "motionSamples": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "frameSignatures": [
+        2298238474,
+        1113839678,
+        3873839964,
+        2854929203
+      ],
+      "movingFrames": true,
+      "decodedAudioRms": [
+        0.05527867877811377,
+        0.056578925465739935
+      ],
+      "audibleAudio": true,
+      "audioTracks": 1
+    }
+  ]
+}
