@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><title>Full recording duration regression</title><button id="run">Test full recording</button><pre id="result">Ready</pre><canvas id="frame" width="320" height="180"></canvas><video id="playback" controls muted></video><script>
+run.onclick=async()=>{let audio,timer,stream,url;run.disabled=true;try{
+ const source=await(await fetch('../js/app.js',{cache:'no-store'})).text();
+ const types=Function(source.slice(source.indexOf('    const recordingTypes ='),source.indexOf('    const supportedRecordingTypes'))+'return recordingTypes')().filter(t=>MediaRecorder.isTypeSupported(t));
+ audio=new AudioContext();await audio.resume();const dest=audio.createMediaStreamDestination(),osc=audio.createOscillator(),gain=audio.createGain();gain.gain.value=.02;osc.connect(gain);gain.connect(dest);osc.start();
+ const painter=frame.getContext('2d');let count=0;timer=setInterval(()=>{painter.fillStyle=count++%2?'#275e66':'#93e5d1';painter.fillRect(0,0,320,180);painter.fillStyle='#fff';painter.font='30px sans-serif';painter.fillText(String(count),40,90)},66);
+ stream=frame.captureStream(15);
+ let saved;const done=new Promise(resolve=>saved=resolve),state={recordPerformance:true,phase:"mix"};const code=source.slice(source.indexOf('    function releaseScreenCapture()'),source.indexOf('    function startMixer()'));
+ const api=Function('screenStream','recordingDestination','MediaRecorder','MediaStream','supportedRecordingTypes','state','recordToggle','recordFormatHint','updateUI','URL','document',`const window={};let mediaRecorder=null,mediaChunks=[];${code};return {startPerformanceRecording,pausePerformanceRecording,resumePerformanceRecording,stopPerformanceRecording,getRecorder:()=>mediaRecorder}`)(stream,dest,MediaRecorder,MediaStream,types,state,{checked:true},{},()=>{},{createObjectURL:blob=>{saved(blob);return 'blob:test'},revokeObjectURL(){}},{body:{appendChild(){}},createElement:()=>({click(){},remove(){}})});
+ if(!source.includes("if (mediaRecorder.state === 'paused') resumePerformanceRecording();"))throw Error('Stale production source');
+ result.textContent='Recording production path for 8 seconds (includes 1 second paused)…';api.startPerformanceRecording();
+ const sleep=ms=>new Promise(r=>setTimeout(r,ms));await sleep(2000);api.pausePerformanceRecording();await sleep(1000);api.startPerformanceRecording();
+ const resumed=api.getRecorder().state==='recording';
+ await sleep(5000);api.stopPerformanceRecording();const blob=await done;url=URL.createObjectURL(blob);playback.src=url;
+ await new Promise((ok,bad)=>{playback.onloadedmetadata=ok;playback.onerror=bad});const duration=playback.duration;
+ let seek=false;if(Number.isFinite(duration)&&duration>2){await new Promise((ok,bad)=>{playback.onseeked=ok;playback.onerror=bad;playback.currentTime=duration-.25;setTimeout(()=>bad(Error('seek timeout')),4000)});seek=playback.currentTime>5;}
+ result.textContent=JSON.stringify({result:resumed&&duration>6&&duration<9&&seek?'PASS':'FAIL',resumedFromTutorialPause:resumed,duration,seekToEnd:seek,bytes:blob.size,mime:blob.type},null,2);
+ }catch(e){result.textContent='FAIL: '+(e.message||e)}finally{clearInterval(timer);stream?.getTracks().forEach(t=>t.stop());await audio?.close();run.disabled=false}};
+</script>

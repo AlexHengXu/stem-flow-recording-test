@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><title>MP4 encoder check</title><button id="run">Test MP4 encoder</button><pre id="result">Ready</pre><canvas id="frame" width="320" height="180"></canvas><script>
+run.onclick=async()=>{let stream,ctx,timer;run.disabled=true;try{
+ const source=await(await fetch('../js/app.js')).text();
+ const types=Function(source.slice(source.indexOf('    const recordingTypes ='),source.indexOf('    const supportedRecordingTypes'))+'return recordingTypes')();
+ const mimeType=types.find(t=>MediaRecorder.isTypeSupported(t));if(!mimeType)throw Error('MP4 not supported');
+ ctx=new AudioContext();await ctx.resume();const dest=ctx.createMediaStreamDestination(),osc=ctx.createOscillator(),gain=ctx.createGain();gain.gain.value=.02;osc.connect(gain);gain.connect(dest);osc.start();
+ stream=frame.captureStream(15);stream.addTrack(dest.stream.getAudioTracks()[0]);const painter=frame.getContext('2d');let i=0;timer=setInterval(()=>{painter.fillStyle=i++%2?'#275e66':'#93e5d1';painter.fillRect(0,0,320,180)},66);
+ const chunks=[];const recorder=new MediaRecorder(stream,{mimeType});const done=new Promise((resolve,reject)=>{recorder.ondataavailable=e=>chunks.push(e.data);recorder.onstop=resolve;recorder.onerror=reject});recorder.start();setTimeout(()=>recorder.stop(),1400);await done;
+ const blob=new Blob(chunks,{type:recorder.mimeType}),bytes=new Uint8Array(await blob.arrayBuffer());const signature=String.fromCharCode(...bytes.slice(4,8));if(signature!=='ftyp'||blob.size<500)throw Error('Not an MP4 container');
+ result.textContent='PASS: native MP4 video + generated audio. '+JSON.stringify({mime:blob.type,bytes:blob.size,signature});
+ }catch(e){result.textContent='FAIL: '+e.message}finally{clearInterval(timer);stream?.getTracks().forEach(t=>t.stop());await ctx?.close();run.disabled=false}};
+</script>

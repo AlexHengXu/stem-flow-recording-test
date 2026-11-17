@@ -1,0 +1,59 @@
+<!doctype html><meta charset="utf-8"><title>Recording menu — native MP4 regression</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>body{overflow:auto;padding:24px}#testPanel{position:relative;z-index:999;background:#182630;padding:20px}#testPanel button{margin:5px}#fixture{width:640px;height:360px}#pauseOverlay{position:relative;padding:10px;display:block}#pauseOverlay:not(.visible){display:none}#helpOverlay,#endingOverlay{display:none}video{width:480px}pre{white-space:pre-wrap}</style>
+<div id="testPanel"><h1>Native MP4 recording test</h1><p>Generated game/camera test pattern + generated audio. No real camera or screen capture.</p><button id="testNow">Test Continue from now</button><button id="testRestart">Test Restart song</button><pre id="result">Loading…</pre><canvas id="fixture" width="640" height="360"></canvas><video id="playback" controls muted></video></div>
+<div id="pauseOverlay" class="visible"><h2>Paused</h2><button id="continueButton">Continue</button><button id="restartButton">Restart</button><button id="endButton">End</button><button id="recordMenuButton">Record</button><button id="recordSave" hidden>Stop &amp; save</button><div id="recordChoices" hidden><p>Record your remix</p><button id="recordFromNow">Continue from now</button><button id="recordFromStart">Restart song</button><button id="recordBack">Back</button></div><p id="recordMenuStatus"></p></div>
+<div id="helpOverlay" class="visible">How to Play</div><div id="endingOverlay"></div><p id="instruction"></p><input id="recordToggle" type="checkbox" hidden><p id="recordFormatHint"></p>
+<script>
+let screenStream,mediaRecorder,mediaChunks=[],recordingDestination,audioContext;
+const recordToggle=document.getElementById('recordToggle'),recordFormatHint=document.getElementById('recordFormatHint');
+const pauseOverlay=document.getElementById('pauseOverlay'),helpOverlay=document.getElementById('helpOverlay'),endingOverlay=document.getElementById('endingOverlay');
+const state={phase:'paused',recordPerformance:false},players={};let pausedFrom='mix',paintTimer,clockTimer,startedAt,frame=0,savedResolve;
+const supportedRecordingTypes=['video/mp4;codecs="avc1.424028,mp4a.40.2"','video/mp4'].filter(t=>MediaRecorder.isTypeSupported(t));
+recordToggle.disabled=!supportedRecordingTypes.length;
+function player(){let time=37;const e=new EventTarget();Object.defineProperty(e,'currentTime',{get:()=>time,set:t=>{time=t;queueMicrotask(()=>e.dispatchEvent(new Event('seeked')))}});e.seeking=false;return e;}
+players.vocals=player();players.drums=player();
+function hideOverlay(el){el.classList.remove('visible')}function showOverlay(el){el.classList.add('visible')}
+function resetGestureControls(){}function introRender(){}function updateUI(){window.StemRecordMenu?.refresh()}
+function playAll(){startedAt=Object.fromEntries(Object.entries(players).map(([k,p])=>[k,p.currentTime]));clockTimer=setInterval(()=>Object.values(players).forEach(p=>p.currentTime+=.05),50)}
+function pauseAll(){clearInterval(clockTimer)}
+function recordingSaved(blob){savedResolve?.(blob)}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const loading=(async()=>{
+ const source=await(await fetch('../js/app.js')).text();const code=source.slice(source.indexOf('    function releaseScreenCapture()'),source.indexOf('    function startMixer()')).replace('link.click();','recordingSaved(blob);');
+ (0,eval)(code);
+ // Synthetic source only: use the real recorder and menu state machine below.
+ let fixtureHandle=null;
+ const originalConfig=navigator.mediaDevices.setCaptureHandleConfig?.bind(navigator.mediaDevices);
+ if(originalConfig)navigator.mediaDevices.setCaptureHandleConfig=config=>{fixtureHandle=config.handle;originalConfig(config)};
+ prepareScreenRecording=async()=>{screenStream=document.getElementById('fixture').captureStream(24);for(const track of screenStream.getVideoTracks())Object.defineProperty(track,'getCaptureHandle',{value:()=>({handle:fixtureHandle})});};
+ const script=document.createElement('script');script.src='../js/record-menu.js';await new Promise((ok,bad)=>{script.onload=ok;script.onerror=bad;document.body.append(script)});
+ result.textContent='Ready';
+})();
+async function test(mode){
+ testNow.disabled=testRestart.disabled=true;let blobURL,osc;
+ try{
+ await loading;
+ if(recordToggle.disabled)throw Error('Native MP4 unavailable');
+ state.phase='paused';pausedFrom='mix';mediaRecorder=null;recordToggle.checked=false;Object.values(players).forEach(p=>p.currentTime=37);showOverlay(pauseOverlay);showOverlay(helpOverlay);
+ audioContext=new AudioContext();await audioContext.resume();recordingDestination=audioContext.createMediaStreamDestination();osc=audioContext.createOscillator();const gain=audioContext.createGain();gain.gain.value=.08;osc.connect(gain).connect(recordingDestination);osc.start();
+ const ctx=fixture.getContext('2d');paintTimer=setInterval(()=>{
+ const help=helpOverlay.classList.contains('visible'),game=state.phase==='mix';
+ ctx.fillStyle=help?'#b71925':game?'#18a34a':'#eab308';ctx.fillRect(0,0,640,360);ctx.fillStyle='white';ctx.font='26px sans-serif';ctx.fillText(help?'How to Play':game?'GAME + CAMERA TEST PATTERN':'Paused',30,100);ctx.fillText('Frame '+(++frame),30,160);ctx.beginPath();ctx.arc(520,230,55,0,Math.PI*2);ctx.fill();
+ },40);
+ result.textContent='Recording '+mode+' with native MP4…';const done=new Promise(r=>savedResolve=r);
+ await window.StemRecordMenu.begin(mode);
+ if(mediaRecorder?.state!=='recording')throw Error(recordMenuStatus.textContent);
+ await sleep(3500);pausePerformanceRecording();state.phase='paused';pauseAll();showOverlay(pauseOverlay);updateUI();
+ await sleep(800);state.phase='mix';hideOverlay(pauseOverlay);resumePerformanceRecording();await sleep(1200);
+ stopPerformanceRecording(true);const blob=await done;blobURL=URL.createObjectURL(blob);
+ const metadata=new Promise((ok,bad)=>{playback.onloadedmetadata=ok;playback.onerror=bad});playback.src=blobURL;await metadata;
+ const duration=playback.duration,pixels=[];const sample=document.createElement('canvas');sample.width=640;sample.height=360;const s=sample.getContext('2d',{willReadFrequently:true});
+ for(const t of [.3,duration-.3]){await new Promise((ok,bad)=>{playback.onseeked=ok;playback.onerror=bad;playback.currentTime=t});s.drawImage(playback,0,0,640,360);pixels.push(Array.from(s.getImageData(5,5,1,1).data).slice(0,3));}
+ const correctPixels=pixels.every(([r,g,b])=>g>r*2&&g>b*1.5);
+ const expected=mode==='now'?37:0;const position=Object.values(startedAt).every(t=>Math.abs(t-expected)<.1);
+ result.textContent=JSON.stringify({result:correctPixels&&position&&duration>4&&duration<6?'PASS':'FAIL',mode,startedAt,duration,bytes:blob.size,mime:blob.type,pixels,gameFramesAtStartAndEnd:correctPixels,audioTracks:recordingDestination.stream.getAudioTracks().length},null,2);
+ }catch(e){result.textContent='FAIL: '+e.message}finally{clearInterval(paintTimer);clearInterval(clockTimer);osc?.stop();await audioContext?.close();testNow.disabled=testRestart.disabled=false;state.phase='paused';updateUI();}
+}
+testNow.onclick=()=>test('now');testRestart.onclick=()=>test('restart');
+</script>

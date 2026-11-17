@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><title>Delay audio regression</title><pre id="result">Rendering delay automation…</pre><script>
+(async()=>{
+ const source=await(await fetch('../js/app.js')).text();
+ const applySource=source.slice(source.indexOf('    function applyEffect('),source.indexOf('    function clearEffects('));
+ const sr=48000,ctx=new OfflineAudioContext(1,sr*4,sr);
+ const delay=ctx.createDelay(1.2),feedback=ctx.createGain(),delayWet=ctx.createGain(),delayTone=ctx.createBiquadFilter();
+ // Read settings from production source so this regression follows the shipped graph.
+ delay.delayTime.value=Number(source.match(/delay.delayTime.value = ([\d.]+)/)[1]);
+ delayTone.type='lowpass';delayTone.frequency.value=Number(source.match(/delayTone.frequency.value=([\d.]+)/)[1]);delayTone.Q.value=.5;
+ feedback.gain.value=delayWet.gain.value=0;
+ delay.connect(delayTone);delayTone.connect(feedback);feedback.connect(delay);delay.connect(delayWet);delayWet.connect(ctx.destination);
+ const oscillator=ctx.createOscillator(),level=ctx.createGain();oscillator.frequency.value=220;level.gain.value=.25;oscillator.connect(level);level.connect(delay);level.connect(ctx.destination);oscillator.start();
+ const clock={currentTime:0},state={delay:[0]},tracks=[{key:'vocals'}],graph={vocals:{delay,feedback,delayWet}};
+ const apply=new Function('audioContext','state','tracks','graph','STEM_NEW_EFFECTS','updateUI','recordEvent',applySource+';return applyEffect')(clock,state,tracks,graph,[],()=>{},()=>{});
+ let writes=0;delay.delayTime.setTargetAtTime=()=>{writes++;throw Error('Delay time changed while dragging')};
+ for(let i=0;i<120;i++){clock.currentTime=i/30;apply(0,'delay',(Math.sin(i*.4)+1)/2,false);}
+ const buffer=await ctx.startRendering(),data=buffer.getChannelData(0);let peak=0,jump=0,difference=0;
+ for(let i=1;i<data.length;i++){if(!Number.isFinite(data[i]))throw Error('Non-finite output');difference+=(data[i]-.25*Math.sin(2*Math.PI*220*i/sr))**2;peak=Math.max(peak,Math.abs(data[i]));jump=Math.max(jump,Math.abs(data[i]-data[i-1]));}
+ if(writes||peak>=1||jump>.06||Math.sqrt(difference/data.length)<.005)throw Error(JSON.stringify({writes,peak,jump}));
+ document.getElementById('result').textContent='PASS: 120 rapid amount changes; fixed 280 ms delay; finite audio; no clipping on 0.25-amplitude tone; no discontinuity above 0.06.\n'+JSON.stringify({peak,maxSampleStep:jump,wetDifferenceRms:Math.sqrt(difference/data.length)});
+})().catch(e=>document.getElementById('result').textContent='FAIL: '+e.stack);
+</script>

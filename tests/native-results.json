@@ -1,0 +1,52 @@
+{
+  "now": {
+    "result": "PASS",
+    "mode": "now",
+    "startedAt": {
+      "vocals": 37,
+      "drums": 37
+    },
+    "duration": 4.712167,
+    "bytes": 83822,
+    "mime": "video/mp4;codecs=avc1.42001f,mp4a.40.2",
+    "pixels": [
+      [
+        25,
+        163,
+        72
+      ],
+      [
+        23,
+        163,
+        72
+      ]
+    ],
+    "gameFramesAtStartAndEnd": true,
+    "audioTracks": 1
+  },
+  "restart": {
+    "result": "PASS",
+    "mode": "restart",
+    "startedAt": {
+      "vocals": 0,
+      "drums": 0
+    },
+    "duration": 4.7154,
+    "bytes": 84153,
+    "mime": "video/mp4;codecs=avc1.42001f,mp4a.40.2",
+    "pixels": [
+      [
+        25,
+        163,
+        72
+      ],
+      [
+        23,
+        163,
+        72
+      ]
+    ],
+    "gameFramesAtStartAndEnd": true,
+    "audioTracks": 1
+  }
+}
