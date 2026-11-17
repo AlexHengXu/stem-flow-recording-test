@@ -21,8 +21,8 @@ context.intro.active=false;context.state.phase='mix';timer();assert(shell.hidden
 context.state.phase='join';context.selectedSession='intro';timer();card.children.find(e=>e.className==='tutorial-skip').onclick();assert.equal(context.selectedSession,'mix');assert(shell.hidden);
 created=0;context.location.search='?flowie=done&lesson=1';context.state.phase='setup';context.intro.active=false;context.startButton=start;start.disabled=true;context.menuHint={textContent:'Allow camera'};context.songStatus={textContent:'Loading song'};
 vm.runInNewContext(fs.readFileSync(__dirname+'/js/flowie-tutorial.js','utf8'),context);
-assert(!shell.hidden);assert(!recording.hidden);assert(shell.classList.values["choosing-song"]);assert(card.children.includes(recording),'original recording controls must be in the visible card');assert(session.checked);assert.equal(start.textContent,'Begin tutorial');assert(feedback.textContent.includes('Allow camera'));
+assert(!shell.hidden);assert(shell.classList.values["choosing-song"]);assert(!card.children.includes(recording),'song selection must not include recording controls');assert(session.checked);assert.equal(start.textContent,'Begin tutorial');assert(feedback.textContent.includes('Allow camera'));
 context.state.phase='ready';start.disabled=false;timer();assert(feedback.textContent.includes('Begin tutorial'));
-context.state.phase='join';context.selectedSession='intro';timer();assert(!shell.classList.values['choosing-song']);assert(recording.hidden);assert(!shell.hidden);
-context.state.phase='mix';timer();assert(shell.hidden);assert(recording.hidden);
+context.state.phase='join';context.selectedSession='intro';timer();assert(!shell.classList.values['choosing-song']);assert(!shell.hidden);
+context.state.phase='mix';timer();assert(shell.hidden);
 console.log('PASS: tutorial visibility, real-state value feedback, Next ownership, pause, final step and skip during countdown.');

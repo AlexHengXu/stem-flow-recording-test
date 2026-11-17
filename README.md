@@ -16,7 +16,7 @@ In Remix, press Space to pause, then select **Record**:
 
 Choose the current Stem Flow tab in the browser sharing dialog. Recording waits for live video frames before music starts. Pause suspends recording; Continue resumes the same file. **Stop & save** or End downloads an MP4. Save the current recording before starting another one.
 
-The v14 setup recording checkbox also remains available: it asks for sharing permission before the tutorial but starts recording only in Remix. Piano background music is silent throughout tutorial and Remix.
+Recording is available only from the Remix pause menu. Song selection and Start do not request screen sharing or start a recording. Piano background music is silent throughout tutorial and Remix.
 
 ## Validation
 

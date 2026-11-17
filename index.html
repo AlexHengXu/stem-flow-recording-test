@@ -123,14 +123,6 @@
           <button id="retrySong" type="button" hidden>Retry audio</button>
         </div>
 
-        <div id="recordingSettings">
-        <label class="record-option">
-          <span>Record game screen + remix audio</span>
-          <input id="recordToggle" type="checkbox">
-        </label>
-        <p id="recordFormatHint" aria-live="polite"></p>
-        </div>
-
         <div class="menu-actions">
           <button id="enableButton" class="primary" type="button" hidden>Retry Camera</button>
           <button id="startButton" type="button" disabled>Start</button>
@@ -174,6 +166,7 @@
         </div>
       </div>
       <p id="recordMenuStatus" role="status" hidden></p>
+      <p id="recordFormatHint" aria-live="polite"></p>
     </section>
   </div>
 
@@ -189,12 +182,12 @@
   </div>
 
     <script src="js/team-visuals.js?v=10-folder"></script>
-    <script src="js/app.js?v=18-mp4-finalize"></script>
+    <script src="js/app.js?v=19-pause-record-only"></script>
   <script src="js/stem-effects.js?v=10-folder"></script>
   <script src="js/song-library.js?v=10-folder"></script>
   <script src="js/fx-bank-switch.js?v=10-folder"></script>
   <script src="js/bootstrap.js?v=10-folder"></script>
-  <script src="js/flowie-tutorial.js?v=10-folder"></script>
+  <script src="js/flowie-tutorial.js?v=19-pause-record-only"></script>
   <script src="js/flowie-camera.js?v=10-folder"></script>
   <script src="js/performance-panel.js?v=10-folder"></script>
 <script>if(new URLSearchParams(location.search).get('flowie')==='done')document.documentElement.classList.remove('booting');</script>
