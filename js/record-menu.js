@@ -90,7 +90,7 @@
       document.getElementById('instruction').textContent='Recording · Space pauses · End or Stop & save downloads MP4';
       status.textContent='Recording paused. Continue resumes this file; Stop & save downloads it.';expanded=false;
     } catch(error){
-      stopPerformanceRecording(true);pauseAll();state.recordPerformance=false;recordToggle.checked=false;releaseScreenCapture();
+      stopPerformanceRecording(true);pauseAll();state.recordPerformance=false;recordToggle.checked=false;
       if(moved){try{await seekPlayers(originalTimes);}catch(_){}}
       state.phase='paused';pausedFrom='mix';showOverlay(pauseOverlay);introRender();
       status.textContent=error.name==='NotAllowedError'?'Sharing cancelled. Your song position has not changed.':error.message;

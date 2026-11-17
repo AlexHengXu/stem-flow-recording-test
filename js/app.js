@@ -305,9 +305,8 @@
       let recorder;
       for (const mimeType of supportedRecordingTypes) {
         try {
-          recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2500000, audioBitsPerSecond: 128000 });
+          recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2500000, audioBitsPerSecond: 128000, videoKeyFrameIntervalDuration: 1000 });
           if (!recorder.mimeType.toLowerCase().startsWith('video/mp4')) throw new Error('MP4 encoder unavailable');
-          recorder.start(1000);
           break;
         } catch (error) {
           recorder = null;
@@ -324,6 +323,7 @@
       const extension = "mp4";
       recordFormatHint.textContent = `Recording format: ${extension.toUpperCase()}`;
       recorder.shouldSave = true;
+      recorder.captureStream = screenStream;
       mediaRecorder = recorder;
       recorder.ondataavailable = event => {
         if (event.data && event.data.size) chunks.push(event.data);
@@ -336,6 +336,12 @@
         updateUI();
       };
       recorder.onstop = () => {
+        // Final dataavailable precedes stop. Keep capture alive until this point.
+        if (recorder.releaseCaptureAfterStop && !(mediaRecorder && mediaRecorder !== recorder && mediaRecorder.captureStream === recorder.captureStream)) {
+          const captured = recorder.captureStream;
+          if (screenStream === captured) releaseScreenCapture();
+          else captured?.getTracks().forEach(track => track.stop());
+        }
         if (mediaRecorder === recorder) { mediaRecorder = null; mediaChunks = []; }
         window.StemRecordMenu?.refresh();
         if (!recorder.shouldSave || !chunks.length) return;
@@ -350,6 +356,15 @@
         link.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60000);
       };
+      try {
+        // Install handlers first and finalize one MP4 instead of one-second fragments.
+        recorder.start();
+      } catch (error) {
+        mediaRecorder = null;
+        state.recordPerformance = false; recordToggle.checked = false;
+        recordFormatHint.textContent = 'MP4 recording could not start. Please retry.';
+        releaseScreenCapture(); return;
+      }
       state.performanceRecording = true;
       state.recordingPaused = false;
     }
@@ -369,13 +384,20 @@
     }
 
     function stopPerformanceRecording(save = true, releaseScreen = true) {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      if (mediaRecorder) {
         mediaRecorder.shouldSave = save;
-        mediaRecorder.stop();
+        mediaRecorder.releaseCaptureAfterStop = !!releaseScreen || !!mediaRecorder.releaseCaptureAfterStop;
+        if (mediaRecorder.state !== "inactive") {
+          // End from the pause menu without leaving the encoder suspended.
+          if (mediaRecorder.state === 'paused') mediaRecorder.resume();
+          mediaRecorder.stop();
+        }
+        // An inactive recorder may still be delivering its final data/stop event.
+      } else if (releaseScreen) {
+        releaseScreenCapture();
       }
       state.performanceRecording = false;
       state.recordingPaused = false;
-      if (releaseScreen) releaseScreenCapture();
     }
 
     function startMixer() {
