@@ -97,7 +97,6 @@
     const endingMessage = document.getElementById("endingMessage");
     const continueButton = document.getElementById("continueButton");
     const restartButton = document.getElementById("restartButton");
-    const endButton = document.getElementById("endButton");
     const endingRestartButton = document.getElementById("endingRestartButton");
     const closeButton = document.getElementById("closeButton");
     const helpButton = document.getElementById("helpButton");
@@ -425,8 +424,8 @@
       resetGestureControls();introRender();
       document.getElementById('skipStepButton').hidden=pausedFrom!=='intro';
       document.getElementById('skipIntroButton').hidden=pausedFrom!=='intro';
-      restartButton.hidden=endButton.hidden=pausedFrom==='intro';
-      document.getElementById('pauseDescription').textContent=pausedFrom==='intro'?'Take your time. Continue practicing, skip this step, or go straight to the song.':'Continue, restart the song, or end this run.';
+      restartButton.hidden=pausedFrom==='intro';
+      document.getElementById('pauseDescription').textContent=pausedFrom==='intro'?'Take your time. Continue practicing, skip this step, or go straight to the song.':'Continue, restart the song, or record.';
       pauseAll();
       window.StemAmbient?.setStage("paused");
       pausePerformanceRecording();
@@ -466,19 +465,6 @@
       playAll();
       startPerformanceRecording();
       document.getElementById("instruction").textContent = "Main: pinch volume · thumbs up opens effects · Space pauses · M clears all effects";
-      updateUI();
-    }
-
-    function endGame() {
-      if(typeof window!=="undefined" && window.StemRecordMenu?.busy)return;
-      hideOverlay(pauseOverlay);
-      state.phase = "ended";
-      stopAll();
-      stopPerformanceRecording();
-      const savedFormat = mediaRecorder?.mimeType.startsWith("video/mp4") ? "MP4" : "WebM";
-      endingMessage.textContent = state.recordPerformance ? `Session ended. If recording was active, a ${savedFormat} file will download automatically.` : "Session ended. Restart or close this page.";
-      showOverlay(endingOverlay);
-      document.getElementById("instruction").textContent = "Finished";
       updateUI();
     }
 
@@ -3830,7 +3816,6 @@ function processStableResults(gestures,now) {
     helpButton.onclick = openHelp;
     helpQuitButton.onclick = closeHelp;
     restartButton.onclick = restartGame;
-    endButton.onclick = endGame;
     endingRestartButton.onclick = restartGame;
     closeButton.onclick = () => {
       window.close();

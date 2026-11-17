@@ -23,8 +23,9 @@
   }
   function refresh(){
     const eligible=state.phase==='paused'&&pausedFrom==='mix';
+    if(state.phase!=='paused'&&!busy)expanded=false;
     const active=!!mediaRecorder&&mediaRecorder.state!=='inactive';
-    const view=[eligible,active,expanded,busy,recordToggle.disabled,!!mediaRecorder].join(':');
+    const view=[state.phase,pausedFrom,eligible,active,expanded,busy,recordToggle.disabled,!!mediaRecorder].join(':');
     if(view===lastView)return;lastView=view;
     button.hidden=!eligible||active||expanded;
     button.disabled=busy||recordToggle.disabled||!!mediaRecorder;
@@ -32,7 +33,10 @@
     save.hidden=!eligible||!active;
     now.disabled=restart.disabled=back.disabled=save.disabled=busy;
     status.hidden=!eligible;
-    for(const id of ['continueButton','restartButton','endButton'])document.getElementById(id).disabled=busy;
+    for(const id of ['continueButton','restartButton']){
+      const control=document.getElementById(id);control.disabled=busy;
+      control.hidden=(eligible&&expanded&&!active)||(id!=='continueButton'&&state.phase==='paused'&&pausedFrom==='intro');
+    }
     if(eligible&&!busy&&!status.textContent)status.textContent=recordToggle.disabled?recordFormatHint.textContent:'Record the game, camera and remix audio as MP4.';
   }
   // Wait for actual captured video frames, not just a DOM animation callback.
@@ -87,7 +91,7 @@
       state.recordPerformance=true;startPerformanceRecording();
       if(!mediaRecorder||mediaRecorder.state!=='recording')throw Error(recordFormatHint.textContent||'MP4 recording could not start.');
       playAll();window.StemAmbient?.setStage('game');
-      document.getElementById('instruction').textContent='Recording · Space pauses · End or Stop & save downloads MP4';
+      document.getElementById('instruction').textContent='Recording · Space pauses · Stop & save downloads MP4';
       status.textContent='Recording paused. Continue resumes this file; Stop & save downloads it.';expanded=false;
     } catch(error){
       stopPerformanceRecording(true);pauseAll();state.recordPerformance=false;recordToggle.checked=false;
